@@ -33,7 +33,7 @@ with the reasoning. Code shortcuts are also tagged `# SCALE-DEBT:` at the call s
 |---|---|---|
 | D1 | Without `REDIS_URL`, the rate limiter, checkpointer, long-term memory and audit log are per-process. | Set `REDIS_URL` (Docker Compose does). `APP_ENV=production` refuses to start without it. |
 | D2 | `VECTOR_STORE=memory` indexes the mock corpus inside each worker at startup. | Production uses Pinecone populated by `data/ingest.py`. |
-| D3 | The document catalog (RLM explore) and BM25 statistics are JSON artifacts loaded at startup. | Move the catalog to a metadata table. Refit BM25 in the batch ingestion job. |
+| D3 | The document catalog (RLM explore) and BM25 statistics are JSON artifacts loaded at startup. On a fresh volume the API derives them from the bundled corpus instead of failing. | Move the catalog to a metadata table. Refit BM25 in the batch ingestion job. |
 | D4 | The Python sandbox relies on process isolation and rlimits, without network isolation. | Run in gVisor/Firecracker or a network-less sidecar. |
 | D5 | MCP client opens a connection per call. | Pool sessions per worker if MCP latency becomes significant. |
 | D6 | Long-term memory recall is lexical over ≤ 50 facts per user. | Enable the store's vector index when memories grow. |

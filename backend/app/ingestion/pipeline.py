@@ -46,6 +46,15 @@ def load_corpus(docs_dir: Path) -> tuple[list[Chunk], DocumentCatalog]:
     return chunks, DocumentCatalog(entries)
 
 
+def derive_corpus_artifacts(docs_dir: Path) -> tuple[BM25Encoder, DocumentCatalog]:
+    """BM25 statistics and the document catalog are pure functions of the corpus: no embeddings and
+    no vector-store writes. Deriving them from the same corpus yields exactly what ingestion saved."""
+    chunks, catalog = load_corpus(docs_dir)
+    if not chunks:
+        raise ValueError(f"no documents found under {docs_dir}")
+    return BM25Encoder.fit(c.text for c in chunks), catalog
+
+
 async def build_index(
     *,
     docs_dir: Path,
