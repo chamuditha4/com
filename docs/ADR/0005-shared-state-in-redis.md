@@ -33,5 +33,24 @@ single-process dev). `APP_ENV=production` requires `REDIS_URL`.
 - Redis persistence (AOF) is sufficient for session data. The audit trail's system of record is the
   log pipeline. For regulatory-grade retention, ship audit events to an append-only store, and
   move checkpoints to Postgres if multi-day durability becomes a requirement.
-- Not exercised in CI here: the Redis-backed checkpointer and store are covered by an opt-in
-  integration test (`TEST_REDIS_URL`); the default suite uses in-memory backends.
+- Covered by the opt-in integration tests (`TEST_REDIS_URL`, passing as of 2026-09-14); the default suite
+  uses in-memory backends.
+
+## Amendments from integration testing (2026-09-14)
+
+The opt-in Redis tests and the Compose stack found three defects, all fixed and covered by
+`backend/tests/integration/test_redis_persistence.py`:
+
+1. **Serializer replacement broke every checkpoint write.** `AsyncRedisSaver` requires its own
+   `JsonPlusRedisSerializer` subclass, which pre-processes values into RedisJSON documents. We
+   now build that subclass with our type allow-list instead of a plain `JsonPlusSerializer`.
+2. **Models came back as dicts after a resume.** RedisJSON revives Pydantic models only for exact
+   symbols in `allowed_json_modules` (in addition to the msgpack allow-list). Both allow-lists are
+   derived from the same `CHECKPOINT_TYPES`.
+3. **Worker startup race.** With `WEB_CONCURRENCY=2`, both workers created the search indexes
+   concurrently and one crashed with `Index already exists`. The saver and store are constructed
+   directly (their `from_conn_string` context managers create indexes before any error handling
+   can apply), and setup retries on that specific error. Reproduced 3/3 before the fix.
+
+Operational note: Redis Query Engine indexes live only in DB 0, so use a dedicated instance
+rather than a non-zero database number.

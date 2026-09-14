@@ -169,6 +169,7 @@ the LangSmith root run id.
 | Prompt leak (canary) / clearance violation | `validator` | non-retryable; answer replaced |
 | MCP server down / tool timeout | `MCPToolProvider`, `ToolRegistry` | tool error in activity panel; answer continues |
 | Redis down (rate limiter) | `RedisTokenBucket` | fail open to per-replica bucket, logged |
+| Several workers create Redis indexes at startup | `persistence._setup_race_safe` | retry on `Index already exists` converges; no worker crashes |
 | Client disconnects mid-stream | SSE generator cancelled | state checkpointed at last super-step |
 | Unhandled exception | exception handlers | 500 envelope with trace id, no stack trace |
 

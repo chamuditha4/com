@@ -62,8 +62,11 @@ retries), and at most 8 concurrent LLM calls per worker.
 |---|---|
 | `multilingual-e5-large` via Pinecone Inference (1024-d, `passage` / `query` input types) | Hosted next to the index (one vendor, one network hop, no GPU to operate). Asymmetric passage/query encoding suits question-to-document retrieval. Multilingual coverage matters for a Sri Lankan bank (English, Sinhala, Tamil) |
 
-Current `.env` uses `EMBEDDING_PROVIDER=hash` with the in-memory store. Switching to Pinecone is
-configuration plus `python data/ingest.py` (not yet exercised live).
+**Live-verified (2026-09-14):**
+- `data/ingest.py` created both indexes and embedded and upserted 166 chunks in about 12 s.
+- The bge reranker ranks the TLS runbook first, and both retrieval legs contribute.
+- Warm hybrid search takes about 1.5 s from Sri Lanka to `us-east-1`. Nearly all of that is network round trips; see ASSUMPTIONS D7.
+
 Alternative: `EMBEDDING_PROVIDER=openai` (`text-embedding-3-*` with configurable dimensions).
 
 ## Sparse retrieval

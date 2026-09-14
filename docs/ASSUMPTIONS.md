@@ -37,12 +37,14 @@ with the reasoning. Code shortcuts are also tagged `# SCALE-DEBT:` at the call s
 | D4 | The Python sandbox relies on process isolation and rlimits, without network isolation. | Run in gVisor/Firecracker or a network-less sidecar. |
 | D5 | MCP client opens a connection per call. | Pool sessions per worker if MCP latency becomes significant. |
 | D6 | Long-term memory recall is lexical over ≤ 50 facts per user. | Enable the store's vector index when memories grow. |
+| D7 | Warm hybrid search against Pinecone takes about 1.5 s from outside us-east-1 (query embedding, 12 namespace queries, rerank; each call about 250–750 ms). | Co-locate API workers with the Pinecone region; cache query embeddings for repeated RLM slice queries; consider single-index hybrid if latency outweighs per-leg explainability (ADR-0002). |
 
 ## Environment notes (this build)
 
 | # | Note |
 |---|---|
-| E1 | Verified with automated tests: offline suite (108 tests, hermetic: it ignores `.env`); live suite against OpenAI `gpt-5.5` / `gpt-5.4-mini`, Gemini `gemini-3.5-flash` fallback and LangSmith (12/12, `RUN_LIVE_TESTS=1`). |
-| E2 | Verified manually: ingestion dry run; real-network runs with the MCP server and API as separate processes (offline and live LLM), SSE; Streamlit UI driven with `AppTest`; `docker compose config`; LangSmith trace lookup by API trace id. |
-| E3 | Not yet verified: Anthropic models (no key), Pinecone store, embeddings and reranker (`VECTOR_STORE=pinecone`), Docker image builds, Redis-backed persistence (`TEST_REDIS_URL`). |
+| E1 | Verified with automated tests (2026-09-14): offline suite 108; live LLM/LangSmith 12/12; live Pinecone 5/5; Redis persistence 4/4. |
+| E2 | Verified manually: Docker Compose stack (Pinecone + OpenAI/Gemini + Redis, 2 API workers) serving the canonical RLM query, Viewer RBAC, HITL across workers, memory, and the Streamlit UI (`AppTest`); LangSmith traces from containers. |
+| E3 | Not verified: Anthropic models (no key). |
 | E4 | LangSmith organization-scoped keys need `LANGSMITH_WORKSPACE_ID`; without it, ingestion returns 403. |
+| E5 | Redis Query Engine indexes exist only in DB 0. Point `REDIS_URL` / `TEST_REDIS_URL` at DB 0 of a dedicated instance. |

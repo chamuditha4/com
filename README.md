@@ -132,7 +132,9 @@ Errors are always `{"error": {"code", "message", "trace_id", "details?"}}`, neve
 uv run pytest                     # unit + integration, fully offline and hermetic (~10s)
 RUN_LIVE_TESTS=1 uv run pytest backend/tests/live   # real LLM providers + LangSmith (~4 min, paid calls)
 uv run ruff check backend data scripts frontend
-TEST_REDIS_URL=redis://localhost:6379/15 uv run pytest backend/tests/integration/test_redis_persistence.py
+RUN_LIVE_TESTS=1 uv run pytest backend/tests/live/test_live_pinecone.py   # Pinecone indexes, RBAC filter pushdown
+docker run --rm -d -p 127.0.0.1:6390:6379 redis:8.2   # dedicated instance: search indexes require DB 0
+TEST_REDIS_URL=redis://127.0.0.1:6390/0 uv run pytest backend/tests/integration/test_redis_persistence.py
 ```
 
 Coverage by area:
@@ -164,11 +166,14 @@ docs/                 architecture, security, memory, model selection, assumptio
 
 ## Verification status
 
-- ✅ **Offline suite:** 108 tests, hermetic.
-- ✅ **Live suite:** 12/12 against OpenAI `gpt-5.5` / `gpt-5.4-mini` with Gemini `gemini-3.5-flash` fallback and LangSmith. Covers fallback takeover, RLM correctness per role, tools/MCP, HITL, injection, memory and tracing.
-- ✅ **Manual checks:**
-  - live HTTP stack (canonical RLM query: 10/10 incidents, 3/3/2/2 tally, validated citations, about 35 s);
-  - Streamlit UI driven end to end with `AppTest`;
-  - ingestion dry run;
-  - `docker compose config`.
-- ⚠️ **Not yet verified:** Anthropic models, the Pinecone-backed store, embeddings and reranker, Docker image builds, and Redis-backed persistence. See [docs/ASSUMPTIONS.md](docs/ASSUMPTIONS.md) §E.
+All verified on 2026-09-14 with the configuration in `.env.example` plus provider keys:
+
+| Area | Result |
+|---|---|
+| Offline suite | 108 passed (hermetic) |
+| Live LLM + LangSmith | 12/12: OpenAI `gpt-5.5` / `gpt-5.4-mini`, Gemini `gemini-3.5-flash` fallback |
+| Live Pinecone | 5/5: all 166 chunks in department namespaces, both legs + hosted reranker, clearance enforced by Pinecone's metadata filter, filter pushdown |
+| Redis persistence | 4/4: conversation and memory across workers, HITL resume on another worker, shared rate limit, concurrent worker startup |
+| Docker Compose | Images built and all 4 services healthy. Through the containers: RLM 10/10 incidents, 3/3/2/2 tally, validated citations (about 46 s); Viewer sees 8; HITL across 2 workers; memory in Redis; Streamlit UI driven with `AppTest`; LangSmith trace present |
+
+Not verified: Anthropic models (no key).
