@@ -123,18 +123,26 @@ def test_ground_findings_drops_hallucinated_documents_and_trusts_metadata():
             "incidents": [
                 {
                     "doc_id": "INC-C-1",
+                    "relevant": True,
+                    "relevance_reason": "payments incident",
                     "title": "made up",
                     "date": "1999-01-01",
                     "root_cause_category": "expired TLS cert",
                     "root_cause_summary": "cert expired",
                     "chunk_ids": ["bogus"],
                 },
-                {"doc_id": "INC-FAKE-9", "root_cause_category": "x", "root_cause_summary": "y"},
+                {
+                    "doc_id": "INC-FAKE-9",
+                    "relevant": True,
+                    "relevance_reason": "r",
+                    "root_cause_category": "x",
+                    "root_cause_summary": "y",
+                },
             ]
         }
     )
-    findings, dropped = ground_findings(extraction, chunks)
-    assert dropped == 1
+    findings, dropped, excluded = ground_findings(extraction, chunks)
+    assert dropped == 1 and excluded == []
     assert findings[0].title == "Title INC-C-1" and findings[0].date == "2026-01-09"
     assert findings[0].root_cause_category == "Expired certificate"
     assert findings[0].chunk_ids == ["INC-C-1::Root Cause::0"]
@@ -231,3 +239,56 @@ def test_per_document_quota_prevents_one_document_crowding_out_others():
     crowded = [_chunk("INC-E-2", "Root Cause", date(2026, 8, 21))]
     selected = diversify_by_document(dominant + crowded, per_doc=3)
     assert [c.chunk.doc_id for c in selected] == ["INC-E-1"] * 3 + ["INC-E-2"]
+
+
+def test_ground_findings_excludes_irrelevant_incidents_transparently():
+    chunks = [_chunk("INC-C-1", "Root Cause", date(2026, 1, 9)), _chunk("INC-TEC-9", "Root Cause", date(2026, 4, 10))]
+    extraction = SliceExtraction.model_validate(
+        {
+            "incidents": [
+                {
+                    "doc_id": "INC-C-1",
+                    "relevant": True,
+                    "relevance_reason": "card payments failed",
+                    "root_cause_category": "cert",
+                    "root_cause_summary": "expired",
+                },
+                {
+                    "doc_id": "INC-TEC-9",
+                    "relevant": False,
+                    "relevance_reason": "login latency, no payment impact",
+                    "root_cause_category": "cache",
+                    "root_cause_summary": "node failed",
+                },
+            ]
+        }
+    )
+    findings, dropped, excluded = ground_findings(extraction, chunks)
+    assert [f.doc_id for f in findings] == ["INC-C-1"] and dropped == 0
+    assert excluded == ["INC-TEC-9: login latency, no payment impact"]
+
+
+def test_evidence_cap_never_starves_later_incidents():
+    incidents, chunks = [], []
+    for n in range(12):
+        doc_chunks = [_chunk(f"INC-F-{n:02d}", f"S{k}", date(2026, 1, n + 1)) for k in range(4)]
+        chunks += doc_chunks
+        incidents.append(
+            IncidentFinding(
+                doc_id=f"INC-F-{n:02d}",
+                title="t",
+                date=f"2026-01-{n + 1:02d}",
+                root_cause_category="Software defect",
+                root_cause_summary="s",
+                chunk_ids=[c.chunk.chunk_id for c in doc_chunks],
+            )
+        )
+    finding = BatchFinding(
+        label="x", depth=0, filters="", documents_in_scope=12, chunks_analyzed=48, chunks=chunks, incidents=incidents
+    )
+    report, evidence = aggregate_findings("q", [finding])
+
+    cited_docs = {e.doc_id for e in evidence}
+    assert len(evidence) == 30
+    assert cited_docs == {i.doc_id for i in incidents}  # 12 x 4 = 48 candidates, yet every incident is citable
+    assert report.root_causes[0].count == 12

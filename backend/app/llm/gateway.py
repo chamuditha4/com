@@ -62,6 +62,7 @@ class LLMClient(Protocol):
         *,
         tier: Tier = "fast",
         run_name: str = "tool_planning",
+        require_tool: bool = False,
     ) -> AIMessage: ...
 
 
@@ -157,6 +158,11 @@ class LangChainLLM:
         *,
         tier: Tier = "fast",
         run_name: str = "tool_planning",
+        require_tool: bool = False,
     ) -> AIMessage:
-        runnable = self._resilient(tier, lambda m: m.bind_tools(list(tools)))
+        # require_tool forces at least one tool call ("any" maps to each provider's equivalent), used when
+        # routing has already established that the request needs a tool.
+        runnable = self._resilient(
+            tier, lambda m: m.bind_tools(list(tools), tool_choice="any" if require_tool else None)
+        )
         return await self._invoke(runnable, messages, run_name)

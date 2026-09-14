@@ -80,6 +80,8 @@ async def tool_planner(state: AgentState, runtime: Runtime[AgentContext]) -> dic
                 [s.to_llm_tool() for s in specs],  # only the tools this role may use
                 tier="fast",
                 run_name="tool_planner",
+                # The supervisor already decided this request needs a tool, so the first plan must call one.
+                require_tool=iteration == 0,
             )
             for tc in ai.tool_calls:
                 spec = spec_by_name.get(tc["name"])

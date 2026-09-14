@@ -176,6 +176,7 @@ class BatchFinding(BaseModel):
     summary: str = ""
     analyzed_by: Literal["llm", "heuristic", "none"] = "none"
     error: str | None = None
+    excluded: list[str] = Field(default_factory=list)  # "DOC-ID: reason" judged irrelevant
     chunks: list[RetrievedChunk] = Field(default_factory=list)
 
 

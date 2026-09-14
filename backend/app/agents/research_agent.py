@@ -157,6 +157,10 @@ def dispatch_batches(state: ResearchState) -> list[Send] | str:
 
 class ExtractedIncident(BaseModel):
     doc_id: str
+    relevant: bool = Field(
+        description="True only if this incident matches the subject of the question (e.g. it affected payments when the question is about payment failures)."
+    )
+    relevance_reason: str = Field(description="One short sentence justifying the relevance decision.")
     title: str = ""
     date: str = ""
     root_cause_category: str
@@ -170,16 +174,24 @@ class SliceExtraction(BaseModel):
     summary: str = ""
 
 
-def ground_findings(extraction: SliceExtraction, chunks: list[RetrievedChunk]) -> tuple[list[IncidentFinding], int]:
-    """Keep only findings that point at documents and chunks actually retrieved for this slice.
+def ground_findings(
+    extraction: SliceExtraction, chunks: list[RetrievedChunk]
+) -> tuple[list[IncidentFinding], int, list[str]]:
+    """Keep only relevant findings that point at documents and chunks actually retrieved for this slice.
 
-    Titles and dates come from document metadata, not from the model."""
+    Returns (findings, dropped_hallucinated, excluded_as_irrelevant). Titles and dates come from
+    document metadata, not from the model. Relevance exclusions are returned (not silently
+    discarded) so they can be shown in the Activity Panel and trace."""
     by_doc = {c.chunk.doc_id: c for c in chunks}
     by_chunk = {c.chunk.chunk_id: c for c in chunks}
-    findings, dropped = [], 0
+    findings: list[IncidentFinding] = []
+    dropped, excluded = 0, []
     for inc in extraction.incidents:
         if inc.doc_id not in by_doc:
             dropped += 1
+            continue
+        if not inc.relevant:
+            excluded.append(f"{inc.doc_id}: {inc.relevance_reason[:200]}")
             continue
         md = by_doc[inc.doc_id].chunk.metadata
         chunk_ids = [cid for cid in inc.chunk_ids if cid in by_chunk and by_chunk[cid].chunk.doc_id == inc.doc_id]
@@ -196,7 +208,7 @@ def ground_findings(extraction: SliceExtraction, chunks: list[RetrievedChunk]) -
                 chunk_ids=chunk_ids,
             )
         )
-    return findings, dropped
+    return findings, dropped, excluded
 
 
 def split_batch(batch: ResearchBatch, docs: list[DocumentMetadata]) -> list[ResearchBatch] | None:
@@ -288,6 +300,8 @@ async def analyze_slice(
         chunks = diversify_by_document(result.chunks, per_doc=per_doc)
 
         incidents: list[IncidentFinding] = []
+
+        excluded: list[str] = []
         analyzed_by = "heuristic"
         summary = ""
         if services.llm.available and chunks:
@@ -298,7 +312,7 @@ async def analyze_slice(
                     tier="fast",
                     run_name=f"rlm_subagent_extract[{batch.label}]",
                 )
-                incidents, dropped = ground_findings(extraction, chunks)
+                incidents, dropped, excluded = ground_findings(extraction, chunks)
                 analyzed_by, summary = "llm", extraction.summary[:500]
                 if dropped:
                     emit(
@@ -309,6 +323,14 @@ async def analyze_slice(
                     )
             except LLMUnavailableError:
                 pass
+        if excluded:
+            emit(
+                runtime,
+                "research.analyze_batch",
+                "decision",
+                f"Slice {batch.label}: excluded {len(excluded)} incident(s) as not relevant to the question",
+                excluded=excluded,
+            )
         if analyzed_by == "heuristic":
             incidents = heuristic_incident_findings(chunks)
 
@@ -327,6 +349,7 @@ async def analyze_slice(
             incidents=incidents,
             summary=summary,
             analyzed_by=analyzed_by,
+            excluded=excluded,
             chunks=chunks,
         )
     ]
@@ -355,13 +378,19 @@ def aggregate_findings(question: str, findings: list[BatchFinding]) -> tuple[Res
                 incidents_by_doc[inc.doc_id] = inc
     incidents = sorted(incidents_by_doc.values(), key=lambda i: (i.date, i.doc_id))
 
+    # Round-robin allocation: every incident gets its best passage before any incident gets a
+    # second one, so the evidence cap can never starve later incidents of citable evidence.
     evidence: list[Evidence] = []
     evidence_id: dict[str, int] = {}
-    for inc in incidents:
-        for cid in inc.chunk_ids:
-            if cid in chunks and cid not in evidence_id and len(evidence) < MAX_RESEARCH_EVIDENCE:
+    queues = [[cid for cid in inc.chunk_ids if cid in chunks] for inc in incidents]
+    depth = 0
+    while len(evidence) < MAX_RESEARCH_EVIDENCE and any(depth < len(q) for q in queues):
+        for queue in queues:
+            if depth < len(queue) and queue[depth] not in evidence_id and len(evidence) < MAX_RESEARCH_EVIDENCE:
+                cid = queue[depth]
                 evidence_id[cid] = len(evidence) + 1
                 evidence.append(Evidence.from_chunk(evidence_id[cid], chunks[cid]))
+        depth += 1
     if not incidents:  # non-incident research: pass the best passages through for synthesis
         for c in sorted(chunks.values(), key=lambda c: -c.score)[:12]:
             evidence.append(Evidence.from_chunk(len(evidence) + 1, c))
