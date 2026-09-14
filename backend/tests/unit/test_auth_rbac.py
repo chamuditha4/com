@@ -54,17 +54,17 @@ async def test_directory_authenticates_demo_users():
 
 
 def test_token_roundtrip_and_signature_enforced():
-    settings = Settings(jwt_secret="a" * 40)
+    settings = Settings(_env_file=None, jwt_secret="a" * 40)
     token, ttl = create_access_token(subject="u-2001", role="analyst", settings=settings)
     assert ttl == settings.jwt_ttl_minutes * 60
     assert decode_access_token(token, settings)["sub"] == "u-2001"
 
     with pytest.raises(AuthenticationError):
-        decode_access_token(token, Settings(jwt_secret="b" * 40))
+        decode_access_token(token, Settings(_env_file=None, jwt_secret="b" * 40))
 
 
 def test_expired_token_rejected():
-    settings = Settings(jwt_secret="a" * 40, jwt_ttl_minutes=-1)
+    settings = Settings(_env_file=None, jwt_secret="a" * 40, jwt_ttl_minutes=-1)
     token, _ = create_access_token(subject="u-2001", role="analyst", settings=settings)
     with pytest.raises(AuthenticationError, match="expired"):
         decode_access_token(token, settings)
@@ -72,4 +72,4 @@ def test_expired_token_rejected():
 
 def test_production_refuses_default_secret():
     with pytest.raises(ValueError, match="JWT_SECRET"):
-        Settings(app_env="production", redis_url="redis://x")
+        Settings(_env_file=None, app_env="production", redis_url="redis://x")

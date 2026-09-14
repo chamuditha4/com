@@ -71,7 +71,9 @@ def admin() -> Principal:
 
 @pytest.fixture
 def test_settings() -> Settings:
+    # _env_file=None keeps the offline suite hermetic: a developer's .env (real keys, tracing) must not leak in.
     return Settings(
+        _env_file=None,
         app_env="test",
         llm_provider="none",
         vector_store="memory",
