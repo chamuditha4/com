@@ -1,0 +1,10 @@
+# Local development only: publish the UI and API on the host.
+#   docker compose -f docker-compose.yml -f docker-compose.local.yml up --build
+# Deployments (Coolify) use docker-compose.yml alone and publish no host ports.
+services:
+  api:
+    ports:
+      - "8000:8000"
+  frontend:
+    ports:
+      - "8501:8501"
