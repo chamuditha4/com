@@ -1,0 +1,92 @@
+# Enterprise AI Assistant — local deployment.
+#
+#   docker compose up --build                      # offline-capable stack (see .env.example)
+#   docker compose --profile ingest run --rm ingest   # index data/mock into Pinecone (needs keys)
+#
+# Pinecone and LangSmith are managed services; everything else runs here. Every service is
+# independently scalable. API workers keep no session state (Redis holds checkpoints, memory,
+# rate-limit buckets and the audit log).
+
+name: enterprise-ai-assistant
+
+x-backend: &backend
+  build:
+    context: .
+    dockerfile: docker/backend.Dockerfile
+  env_file:
+    - path: .env
+      required: false
+  restart: unless-stopped
+
+services:
+  redis:
+    # Redis 8 ships the JSON and Query Engine modules required by the LangGraph Redis
+    # checkpointer and store.
+    image: redis:8.2
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  mcp-server:
+    <<: *backend
+    working_dir: /srv/backend
+    command: ["python", "-m", "mcp_server.server"]
+    environment:
+      MCP_HOST: 0.0.0.0
+      MCP_PORT: "8765"
+    expose:
+      - "8765" # internal network only; never published to the host
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; socket.create_connection(('127.0.0.1', 8765), 2)"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  api:
+    <<: *backend
+    depends_on:
+      redis:
+        condition: service_healthy
+      mcp-server:
+        condition: service_started
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      CHECKPOINTER: redis
+      MCP_SERVER_URL: http://mcp-server:8765/mcp
+      CORS_ORIGINS: '["http://localhost:8501"]'
+      WEB_CONCURRENCY: "2"
+    ports:
+      - "8000:8000"
+    volumes:
+      - artifacts:/srv/data/artifacts
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+    environment:
+      API_URL: http://api:8000
+    ports:
+      - "8501:8501"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+  ingest:
+    <<: *backend
+    profiles: ["ingest"]
+    command: ["python", "data/ingest.py"]
+    volumes:
+      - artifacts:/srv/data/artifacts
+    restart: "no"
+
+volumes:
+  redis-data:
+  artifacts:
