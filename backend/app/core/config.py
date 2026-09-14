@@ -115,6 +115,8 @@ class Settings(BaseSettings):
     langsmith_tracing: bool = False
     langsmith_api_key: SecretStr | None = None
     langsmith_endpoint: str = "https://api.smith.langchain.com"
+    # Required when the API key is organization-scoped (it may then list workspaces but not write runs).
+    langsmith_workspace_id: str | None = None
 
     @model_validator(mode="after")
     def _check_production_safety(self) -> Settings:

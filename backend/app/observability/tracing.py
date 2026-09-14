@@ -28,5 +28,7 @@ def configure_tracing(settings: Settings) -> bool:
         os.environ.setdefault("LANGSMITH_API_KEY", api_key)
         os.environ.setdefault("LANGSMITH_PROJECT", settings.langsmith_project)
         os.environ.setdefault("LANGSMITH_ENDPOINT", settings.langsmith_endpoint)
+        if settings.langsmith_workspace_id:
+            os.environ.setdefault("LANGSMITH_WORKSPACE_ID", settings.langsmith_workspace_id)
     logger.info("langsmith tracing", extra={"enabled": enabled, "project": settings.langsmith_project})
     return enabled
