@@ -60,6 +60,8 @@ class DocumentCatalog:
                     continue
                 if filters.date_to and md.created_date > filters.date_to:
                     continue
+                if filters.doc_ids and md.doc_id not in filters.doc_ids:
+                    continue
             result.append(md)
         return sorted(result, key=lambda m: (m.created_date, m.doc_id))
 

@@ -104,6 +104,7 @@ class SearchFilters(BaseModel):
     document_types: list[DocumentType] | None = None
     date_from: date | None = None
     date_to: date | None = None
+    doc_ids: list[str] | None = Field(default=None, max_length=50)
 
     @field_validator("departments")
     @classmethod
@@ -130,6 +131,8 @@ class SearchFilters(BaseModel):
             parts.append(f"types={','.join(t.value for t in self.document_types)}")
         if self.date_from or self.date_to:
             parts.append(f"dates={self.date_from or '…'}..{self.date_to or '…'}")
+        if self.doc_ids:
+            parts.append(f"docs={','.join(self.doc_ids)}")
         return " ".join(parts) or "none"
 
 

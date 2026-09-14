@@ -33,6 +33,8 @@ def build_metadata_filter(
             clauses.append({"created_ts": {"$gte": date_to_ts(filters.date_from)}})
         if filters.date_to:
             clauses.append({"created_ts": {"$lte": date_to_ts(filters.date_to)}})
+        if filters.doc_ids:
+            clauses.append({"doc_id": {"$in": filters.doc_ids}})
     return {"$and": clauses}
 
 
