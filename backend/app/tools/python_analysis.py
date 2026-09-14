@@ -32,9 +32,29 @@ _RUNNER = Path(__file__).with_name("sandbox_runner.py")
 ALLOWED_IMPORTS = frozenset({"math", "statistics", "collections", "datetime", "json", "re", "itertools"})
 BANNED_NAMES = frozenset(
     {
-        "eval", "exec", "compile", "open", "input", "globals", "locals", "vars", "getattr",
-        "setattr", "delattr", "__import__", "breakpoint", "exit", "quit", "help", "memoryview",
-        "type", "object", "super", "classmethod", "staticmethod", "property",
+        "eval",
+        "exec",
+        "compile",
+        "open",
+        "input",
+        "globals",
+        "locals",
+        "vars",
+        "getattr",
+        "setattr",
+        "delattr",
+        "__import__",
+        "breakpoint",
+        "exit",
+        "quit",
+        "help",
+        "memoryview",
+        "type",
+        "object",
+        "super",
+        "classmethod",
+        "staticmethod",
+        "property",
     }
 )
 MAX_CODE_CHARS = 5000
@@ -47,8 +67,7 @@ class PythonAnalysisArgs(BaseModel):
         max_length=MAX_CODE_CHARS,
         description=(
             "Python 3 code for numeric/tabular analysis. Input is available as `data`. "
-            "Assign the answer to `result` or print it. Allowed imports: "
-            + ", ".join(sorted(ALLOWED_IMPORTS))
+            "Assign the answer to `result` or print it. Allowed imports: " + ", ".join(sorted(ALLOWED_IMPORTS))
         ),
     )
     data: Any = Field(default=None, description="JSON-serializable input data for the analysis.")
@@ -106,7 +125,10 @@ class PythonSandbox:
         ).encode()
 
         process = await asyncio.create_subprocess_exec(
-            sys.executable, "-I", "-S", str(_RUNNER),
+            sys.executable,
+            "-I",
+            "-S",
+            str(_RUNNER),
             stdin=asyncio.subprocess.PIPE,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,

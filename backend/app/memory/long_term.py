@@ -47,11 +47,7 @@ def heuristic_facts(text: str) -> list[str]:
 
 
 def is_storable(fact: str) -> bool:
-    return (
-        0 < len(fact) <= MAX_FACT_CHARS
-        and not redact_sensitive(fact).kinds
-        and not assess_injection(fact).flagged
-    )
+    return 0 < len(fact) <= MAX_FACT_CHARS and not redact_sensitive(fact).kinds and not assess_injection(fact).flagged
 
 
 class LongTermMemory:

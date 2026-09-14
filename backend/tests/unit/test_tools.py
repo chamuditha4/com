@@ -87,9 +87,7 @@ async def test_mcp_tool_roundtrip_for_analyst(registry, analyst):
 
 
 async def test_unreachable_mcp_server_degrades_to_no_tools(analyst, audit, retriever):
-    registry = ToolRegistry(
-        builtin=[], audit=audit, mcp=MCPToolProvider("http://127.0.0.1:9/mcp", timeout_seconds=1)
-    )
+    registry = ToolRegistry(builtin=[], audit=audit, mcp=MCPToolProvider("http://127.0.0.1:9/mcp", timeout_seconds=1))
     assert await registry.tools_for(analyst) == []
 
 

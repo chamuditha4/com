@@ -65,9 +65,7 @@ class DocumentCatalog:
             result.append(md)
         return sorted(result, key=lambda m: (m.created_date, m.doc_id))
 
-    def overview(
-        self, allowed_levels: Sequence[AccessLevel], filters: SearchFilters | None = None
-    ) -> CatalogOverview:
+    def overview(self, allowed_levels: Sequence[AccessLevel], filters: SearchFilters | None = None) -> CatalogOverview:
         docs = self.visible(allowed_levels, filters)
         return CatalogOverview(
             total_documents=len(docs),

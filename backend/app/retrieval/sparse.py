@@ -92,9 +92,7 @@ class BM25Encoder:
             return SparseVector(indices=[], values=[])
         counts = Counter(token_index(t) for t in tokens)
         length_norm = 1 - self.b + self.b * len(tokens) / (self.avg_doc_len or len(tokens))
-        items = sorted(
-            (idx, tf * (self.k1 + 1) / (tf + self.k1 * length_norm)) for idx, tf in counts.items()
-        )
+        items = sorted((idx, tf * (self.k1 + 1) / (tf + self.k1 * length_norm)) for idx, tf in counts.items())
         return SparseVector(indices=[i for i, _ in items], values=[v for _, v in items])
 
     def idf(self, index: int) -> float:

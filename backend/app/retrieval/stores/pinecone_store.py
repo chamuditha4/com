@@ -68,8 +68,7 @@ class PineconeStore:
 
         for namespace, group in by_namespace.items():
             dense = [
-                {"id": r.chunk.chunk_id, "values": r.dense, "metadata": r.chunk.to_index_metadata()}
-                for r in group
+                {"id": r.chunk.chunk_id, "values": r.dense, "metadata": r.chunk.to_index_metadata()} for r in group
             ]
             sparse = [
                 {
@@ -80,9 +79,7 @@ class PineconeStore:
                 for r in group
                 if r.sparse.indices  # Pinecone rejects empty sparse vectors
             ]
-            await self._dense.upsert(
-                vectors=dense, namespace=namespace, batch_size=_UPSERT_BATCH, show_progress=False
-            )
+            await self._dense.upsert(vectors=dense, namespace=namespace, batch_size=_UPSERT_BATCH, show_progress=False)
             if sparse:
                 await self._sparse.upsert(
                     vectors=sparse, namespace=namespace, batch_size=_UPSERT_BATCH, show_progress=False
@@ -91,10 +88,7 @@ class PineconeStore:
 
     @staticmethod
     def _to_matches(response: Any) -> list[StoreMatch]:
-        return [
-            StoreMatch(id=m.id, score=float(m.score), metadata=dict(m.metadata or {}))
-            for m in response.matches
-        ]
+        return [StoreMatch(id=m.id, score=float(m.score), metadata=dict(m.metadata or {})) for m in response.matches]
 
     async def dense_query(
         self, *, vector: list[float], top_k: int, metadata_filter: dict[str, Any], namespace: str

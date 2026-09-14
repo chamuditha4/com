@@ -32,9 +32,7 @@ class FusedCandidate:
     sparse_score: float | None = None
 
 
-def _collect(
-    dense: list[StoreMatch], sparse: list[StoreMatch]
-) -> dict[str, FusedCandidate]:
+def _collect(dense: list[StoreMatch], sparse: list[StoreMatch]) -> dict[str, FusedCandidate]:
     candidates: dict[str, FusedCandidate] = {}
     for rank, match in enumerate(dense, start=1):
         c = candidates.setdefault(match.id, FusedCandidate(match.id, match.metadata))
@@ -87,7 +85,5 @@ def weighted_score_fusion(
     candidates = _collect(dense, sparse)
     dense_norm, sparse_norm = _min_max(dense), _min_max(sparse)
     for c in candidates.values():
-        c.fused_score = dense_weight * dense_norm.get(c.id, 0.0) + sparse_weight * sparse_norm.get(
-            c.id, 0.0
-        )
+        c.fused_score = dense_weight * dense_norm.get(c.id, 0.0) + sparse_weight * sparse_norm.get(c.id, 0.0)
     return _ordered(candidates)

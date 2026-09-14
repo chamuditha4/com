@@ -41,9 +41,7 @@ class AccessLevel(StrEnum):
 
 ROLE_PERMISSIONS: dict[Role, frozenset[Permission]] = {
     Role.VIEWER: frozenset({Permission.CHAT, Permission.SEARCH}),
-    Role.ANALYST: frozenset(
-        {Permission.CHAT, Permission.SEARCH, Permission.ANALYTICS, Permission.MCP}
-    ),
+    Role.ANALYST: frozenset({Permission.CHAT, Permission.SEARCH, Permission.ANALYTICS, Permission.MCP}),
     Role.ADMINISTRATOR: frozenset(Permission),
 }
 

@@ -73,7 +73,9 @@ def can_use_tools(principal: Principal) -> bool:
     return principal.has(Permission.ANALYTICS) or principal.has(Permission.MCP) or principal.has(Permission.ADMIN)
 
 
-def route_heuristically(question: str, principal: Principal, known_departments: list[str], today: date) -> RouteDecision:
+def route_heuristically(
+    question: str, principal: Principal, known_departments: list[str], today: date
+) -> RouteDecision:
     window = resolve_time_window(question, today)
     doc_types = infer_document_types(question)
 
@@ -103,9 +105,12 @@ def route_heuristically(question: str, principal: Principal, known_departments: 
 # --- research extraction ---------------------------------------------------------------------
 
 ROOT_CAUSE_TAXONOMY: tuple[tuple[str, re.Pattern[str]], ...] = (
-    ("Expired certificate", re.compile(r"certificate", re.I)),
+    ("Expired certificate", re.compile(r"certificate|\bcerts?\b|\b(m?tls|ssl)\b", re.I)),
     ("Database connection pool exhaustion", re.compile(r"connection pool|pool (exhaust|saturat)", re.I)),
-    ("Third-party processor outage", re.compile(r"third-party|processor (outage|degradation)|acquir(er|ing partner)|vendor", re.I)),
+    (
+        "Third-party processor outage",
+        re.compile(r"third-party|processor (outage|degradation)|acquir(er|ing partner)|vendor", re.I),
+    ),
     ("Faulty configuration change", re.compile(r"configuration|feature flag|config\b", re.I)),
     ("Security attack", re.compile(r"credential stuffing|attack", re.I)),
     ("Infrastructure failure", re.compile(r"\bdns\b|resolver|cache node|failover|data-centre", re.I)),

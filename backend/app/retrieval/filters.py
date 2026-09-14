@@ -21,9 +21,7 @@ def build_metadata_filter(
     if not allowed_access_levels:
         raise ValueError("refusing to build a retrieval filter without an access-level clause")
 
-    clauses: list[dict[str, Any]] = [
-        {"access_level": {"$in": sorted(level.value for level in allowed_access_levels)}}
-    ]
+    clauses: list[dict[str, Any]] = [{"access_level": {"$in": sorted(level.value for level in allowed_access_levels)}}]
     if filters:
         if filters.departments:
             clauses.append({"department": {"$in": filters.departments}})
@@ -45,7 +43,7 @@ _COMPARATORS = {
     "$gte": lambda a, b: a is not None and a >= b,
     "$lt": lambda a, b: a is not None and a < b,
     "$lte": lambda a, b: a is not None and a <= b,
-    "$in": lambda a, b: (bool(set(a) & set(b)) if isinstance(a, list) else a in b),
+    "$in": lambda a, b: bool(set(a) & set(b)) if isinstance(a, list) else a in b,
     "$nin": lambda a, b: (not set(a) & set(b)) if isinstance(a, list) else a not in b,
 }
 

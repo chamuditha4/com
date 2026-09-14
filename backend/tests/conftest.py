@@ -2,6 +2,11 @@
 
 from __future__ import annotations
 
+import os
+
+# Fail tests if any checkpointed type is not registered with the serializer (see memory/persistence.py).
+os.environ["LANGGRAPH_STRICT_MSGPACK"] = "true"
+
 import asyncio
 from dataclasses import dataclass
 
@@ -29,9 +34,7 @@ class IndexedCorpus:
 @pytest.fixture(scope="session")
 def corpus() -> IndexedCorpus:
     store, embedder = InMemoryVectorStore(), HashingEmbedder()
-    encoder, catalog, _ = asyncio.run(
-        build_index(docs_dir=REPO_ROOT / "data" / "mock", store=store, embedder=embedder)
-    )
+    encoder, catalog, _ = asyncio.run(build_index(docs_dir=REPO_ROOT / "data" / "mock", store=store, embedder=embedder))
     return IndexedCorpus(store, embedder, encoder, catalog)
 
 

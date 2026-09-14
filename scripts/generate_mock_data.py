@@ -373,7 +373,11 @@ INCIDENTS = [
         service="Card Authorization",
         duration="1 hour 10 minutes",
         impact="Card authorizations were intermittently slow for 1 hour 10 minutes due to name resolution failures.",
-        timeline=["11:00 — Latency alerts.", "11:40 — DNS resolver pool found unhealthy.", "12:10 — Resolvers replaced."],
+        timeline=[
+            "11:00 — Latency alerts.",
+            "11:40 — DNS resolver pool found unhealthy.",
+            "12:10 — Resolvers replaced.",
+        ],
         root_cause="Two of three internal DNS resolvers failed after an operating system patch. Root cause category: infrastructure DNS failure.",
         resolution="Resolvers were rebuilt from the previous image.",
         actions=["Add DNS resolver health checks — Owner: Infrastructure — Due 2025-01-15."],
@@ -388,7 +392,11 @@ INCIDENTS = [
         service="Payment Gateway",
         duration="4 hours",
         impact="About 2% of payment gateway requests failed intermittently over 4 hours.",
-        timeline=["06:00 — Error rate increases slowly.", "09:30 — Memory leak identified.", "10:00 — Rolling restart."],
+        timeline=[
+            "06:00 — Error rate increases slowly.",
+            "09:30 — Memory leak identified.",
+            "10:00 — Rolling restart.",
+        ],
         root_cause="A JSON serialization library upgrade introduced a memory leak in the payment gateway. Root cause category: software defect (memory leak).",
         resolution="The library upgrade was reverted.",
         actions=["Add memory soak tests to the release pipeline — Owner: Payments Engineering — Due 2025-06-01."],
@@ -404,7 +412,11 @@ INCIDENTS = [
         service="Internet Banking",
         duration="35 minutes",
         impact="Internet banking logins took up to 20 seconds for 35 minutes.",
-        timeline=["08:00 — Login latency alert.", "08:20 — Session cache node failure identified.", "08:35 — Replica promoted."],
+        timeline=[
+            "08:00 — Login latency alert.",
+            "08:20 — Session cache node failure identified.",
+            "08:35 — Replica promoted.",
+        ],
         root_cause="A session cache node failed and automatic replica promotion was disabled after a maintenance window. Root cause category: infrastructure failover misconfiguration.",
         resolution="The replica was promoted manually and automatic failover re-enabled.",
         actions=["Add post-maintenance failover verification — Owner: SRE — Due 2026-05-10."],
@@ -420,7 +432,12 @@ INCIDENTS = [
         service="Mobile Banking Authentication",
         duration="6 hours",
         impact="An automated credential stuffing campaign attempted 2.3 million logins. 184 accounts were accessed using reused passwords before step-up authentication blocked further access.",
-        timeline=["02:10 — Login failure spike.", "03:00 — Attack confirmed.", "04:15 — Bot mitigation rules deployed.", "08:10 — Attack subsides."],
+        timeline=[
+            "02:10 — Login failure spike.",
+            "03:00 — Attack confirmed.",
+            "04:15 — Bot mitigation rules deployed.",
+            "08:10 — Attack subsides.",
+        ],
         root_cause="Customers reused passwords exposed in third-party breaches. Bot detection thresholds were tuned for daytime traffic and did not trigger on distributed low-rate attempts overnight. Root cause category: security attack (credential stuffing).",
         resolution="Affected accounts were locked and customers contacted. Risk-based step-up authentication is now enforced for new devices.",
         actions=["Enforce device binding for mobile banking — Owner: Digital Security — Due 2026-06-30."],
@@ -437,7 +454,14 @@ INCIDENTS = [
 # --------------------------------------------------------------------------------------------
 
 DOCS = [
-    Doc("POL-SEC-001", "Information Security Policy", "security", "policy", "internal", "2025-02-01", """
+    Doc(
+        "POL-SEC-001",
+        "Information Security Policy",
+        "security",
+        "policy",
+        "internal",
+        "2025-02-01",
+        """
         # Information Security Policy
 
         ## Purpose
@@ -467,8 +491,17 @@ DOCS = [
 
         Suspected security incidents must be reported to the Security Operations Centre within 30 minutes
         of discovery via the security hotline or the incident portal.
-        """, ["security", "access-control", "ai-usage"]),
-    Doc("POL-CMP-004", "Data Classification and Handling Standard", "compliance", "policy", "public", "2025-06-15", """
+        """,
+        ["security", "access-control", "ai-usage"],
+    ),
+    Doc(
+        "POL-CMP-004",
+        "Data Classification and Handling Standard",
+        "compliance",
+        "policy",
+        "public",
+        "2025-06-15",
+        """
         # Data Classification and Handling Standard
 
         ## Classification Levels
@@ -491,8 +524,17 @@ DOCS = [
         ## Retention
 
         Incident reports are retained for seven years. Meeting notes are retained for three years.
-        """, ["classification", "data-handling"]),
-    Doc("POL-TEC-010", "Incident Management Policy", "technology", "policy", "internal", "2025-08-01", """
+        """,
+        ["classification", "data-handling"],
+    ),
+    Doc(
+        "POL-TEC-010",
+        "Incident Management Policy",
+        "technology",
+        "policy",
+        "internal",
+        "2025-08-01",
+        """
         # Incident Management Policy
 
         ## Severity Definitions
@@ -516,8 +558,17 @@ DOCS = [
 
         The Technology Risk team reviews incidents quarterly to identify recurring root causes and confirm
         that action items address systemic issues rather than symptoms.
-        """, ["incident-management", "severity"]),
-    Doc("POL-TEC-015", "Change Management Policy", "technology", "policy", "internal", "2025-11-10", """
+        """,
+        ["incident-management", "severity"],
+    ),
+    Doc(
+        "POL-TEC-015",
+        "Change Management Policy",
+        "technology",
+        "policy",
+        "internal",
+        "2025-11-10",
+        """
         # Change Management Policy
 
         ## Scope
@@ -537,8 +588,17 @@ DOCS = [
 
         Changes to payment services must be released through canary deployment covering at least 5% of
         traffic for 15 minutes with automated rollback on error-rate regression.
-        """, ["change-management", "deployment"]),
-    Doc("POL-SEC-007", "Certificate Lifecycle Management Standard", "security", "policy", "internal", "2026-04-02", """
+        """,
+        ["change-management", "deployment"],
+    ),
+    Doc(
+        "POL-SEC-007",
+        "Certificate Lifecycle Management Standard",
+        "security",
+        "policy",
+        "internal",
+        "2026-04-02",
+        """
         # Certificate Lifecycle Management Standard
 
         ## Background
@@ -558,8 +618,17 @@ DOCS = [
 
         Certificates that cannot be renewed automatically, such as hardware security module certificates,
         require a documented manual renewal plan approved by Platform Security.
-        """, ["certificates", "tls", "security"]),
-    Doc("POL-CMP-012", "Anti-Money Laundering and KYC Policy", "compliance", "policy", "confidential", "2026-01-20", """
+        """,
+        ["certificates", "tls", "security"],
+    ),
+    Doc(
+        "POL-CMP-012",
+        "Anti-Money Laundering and KYC Policy",
+        "compliance",
+        "policy",
+        "confidential",
+        "2026-01-20",
+        """
         # Anti-Money Laundering and KYC Policy
 
         ## Customer Due Diligence
@@ -576,8 +645,17 @@ DOCS = [
 
         Staff must escalate suspicious activity to the Money Laundering Reporting Officer within one business
         day. Tipping off a customer is a criminal offence.
-        """, ["aml", "kyc", "regulatory"]),
-    Doc("POL-HR-002", "Remote Work and Leave Policy", "hr", "policy", "internal", "2026-02-01", """
+        """,
+        ["aml", "kyc", "regulatory"],
+    ),
+    Doc(
+        "POL-HR-002",
+        "Remote Work and Leave Policy",
+        "hr",
+        "policy",
+        "internal",
+        "2026-02-01",
+        """
         # Remote Work and Leave Policy
 
         ## Remote Work
@@ -593,8 +671,17 @@ DOCS = [
 
         Engineers on the payments on-call rota receive an on-call allowance per week and time off in lieu for
         incidents handled outside business hours.
-        """, ["hr", "leave", "remote-work"]),
-    Doc("HR-CMP-2026", "Compensation Bands 2026", "hr", "policy", "restricted", "2026-01-05", """
+        """,
+        ["hr", "leave", "remote-work"],
+    ),
+    Doc(
+        "HR-CMP-2026",
+        "Compensation Bands 2026",
+        "hr",
+        "policy",
+        "restricted",
+        "2026-01-05",
+        """
         # Compensation Bands 2026
 
         ## Technology Bands
@@ -606,8 +693,17 @@ DOCS = [
 
         The 2026 bonus pool is linked to return-on-equity targets and operational resilience objectives,
         including a reduction in SEV1 payment incidents.
-        """, ["hr", "compensation"]),
-    Doc("RB-PAY-003", "Payment Gateway Failover Runbook", "payments", "runbook", "internal", "2025-09-01", """
+        """,
+        ["hr", "compensation"],
+    ),
+    Doc(
+        "RB-PAY-003",
+        "Payment Gateway Failover Runbook",
+        "payments",
+        "runbook",
+        "internal",
+        "2025-09-01",
+        """
         # Payment Gateway Failover Runbook
 
         ## When to Use
@@ -627,8 +723,17 @@ DOCS = [
         ## Rollback
 
         Return traffic to the primary data centre only after 30 minutes of stable health checks.
-        """, ["runbook", "failover", "payments"]),
-    Doc("RB-TEC-008", "TLS Certificate Rotation Runbook", "technology", "runbook", "internal", "2026-03-15", """
+        """,
+        ["runbook", "failover", "payments"],
+    ),
+    Doc(
+        "RB-TEC-008",
+        "TLS Certificate Rotation Runbook",
+        "technology",
+        "runbook",
+        "internal",
+        "2026-03-15",
+        """
         # TLS Certificate Rotation Runbook
 
         ## Pre-checks
@@ -648,8 +753,17 @@ DOCS = [
 
         If a certificate has already expired and payments are failing, use the emergency CA issuance path and
         page Platform Security. Target restoration is under 30 minutes.
-        """, ["runbook", "certificates"]),
-    Doc("RB-PAY-006", "Ledger Database Connection Pool Tuning Guide", "payments", "runbook", "internal", "2026-07-10", """
+        """,
+        ["runbook", "certificates"],
+    ),
+    Doc(
+        "RB-PAY-006",
+        "Ledger Database Connection Pool Tuning Guide",
+        "payments",
+        "runbook",
+        "internal",
+        "2026-07-10",
+        """
         # Ledger Database Connection Pool Tuning Guide
 
         ## Background
@@ -669,8 +783,17 @@ DOCS = [
         ## Peak Calendar
 
         Salary day (last working day), month end and festive seasons (April and December) require pre-scaling.
-        """, ["runbook", "database", "capacity"]),
-    Doc("ARC-PAY-001", "Payments Platform Architecture Overview", "payments", "architecture", "internal", "2025-09-20", """
+        """,
+        ["runbook", "database", "capacity"],
+    ),
+    Doc(
+        "ARC-PAY-001",
+        "Payments Platform Architecture Overview",
+        "payments",
+        "architecture",
+        "internal",
+        "2025-09-20",
+        """
         # Payments Platform Architecture Overview
 
         ## Components
@@ -690,8 +813,17 @@ DOCS = [
 
         Shared ledger connection pools and manually managed certificates were identified as architectural
         risks in the 2026 reliability review.
-        """, ["architecture", "payments"]),
-    Doc("ARC-TEC-004", "Core Banking Integration Architecture", "technology", "architecture", "confidential", "2026-02-12", """
+        """,
+        ["architecture", "payments"],
+    ),
+    Doc(
+        "ARC-TEC-004",
+        "Core Banking Integration Architecture",
+        "technology",
+        "architecture",
+        "confidential",
+        "2026-02-12",
+        """
         # Core Banking Integration Architecture
 
         ## Integration Pattern
@@ -708,8 +840,17 @@ DOCS = [
 
         The 2026–2028 roadmap replaces batch file interfaces with real-time APIs and decommissions the legacy
         message queue by Q4 2027.
-        """, ["architecture", "core-banking"]),
-    Doc("PRD-RTL-021", "Instant Payments Product Specification", "retail-banking", "product_spec", "internal", "2025-12-01", """
+        """,
+        ["architecture", "core-banking"],
+    ),
+    Doc(
+        "PRD-RTL-021",
+        "Instant Payments Product Specification",
+        "retail-banking",
+        "product_spec",
+        "internal",
+        "2025-12-01",
+        """
         # Instant Payments Product Specification
 
         ## Overview
@@ -726,8 +867,17 @@ DOCS = [
 
         Target availability 99.95% monthly, with 95% of payments completed within 5 seconds. Failed payments
         must be clearly communicated in-app with a retry option.
-        """, ["product", "instant-payments"]),
-    Doc("PRD-RTL-017", "Card Controls in Mobile App", "retail-banking", "product_spec", "public", "2025-10-10", """
+        """,
+        ["product", "instant-payments"],
+    ),
+    Doc(
+        "PRD-RTL-017",
+        "Card Controls in Mobile App",
+        "retail-banking",
+        "product_spec",
+        "public",
+        "2025-10-10",
+        """
         # Card Controls in Mobile App
 
         ## Features
@@ -738,8 +888,17 @@ DOCS = [
         ## Customer Benefits
 
         Card controls reduce fraud exposure and give customers confidence when travelling or shopping online.
-        """, ["product", "cards", "mobile"]),
-    Doc("MTG-PAY-2026-06", "Payments Reliability Review — June 2026", "payments", "meeting_notes", "internal", "2026-06-12", """
+        """,
+        ["product", "cards", "mobile"],
+    ),
+    Doc(
+        "MTG-PAY-2026-06",
+        "Payments Reliability Review — June 2026",
+        "payments",
+        "meeting_notes",
+        "internal",
+        "2026-06-12",
+        """
         # Payments Reliability Review — June 2026
 
         ## Attendees
@@ -770,8 +929,17 @@ DOCS = [
         - Fund a certificate automation programme in Q3 2026.
         - Mandate separate connection pools for batch workloads.
         - Next review scheduled for September 2026.
-        """, ["meeting", "reliability"]),
-    Doc("MTG-TEC-2026-03", "Architecture Review Board — March 2026", "technology", "meeting_notes", "internal", "2026-03-18", """
+        """,
+        ["meeting", "reliability"],
+    ),
+    Doc(
+        "MTG-TEC-2026-03",
+        "Architecture Review Board — March 2026",
+        "technology",
+        "meeting_notes",
+        "internal",
+        "2026-03-18",
+        """
         # Architecture Review Board — March 2026
 
         ## Agenda
@@ -789,7 +957,9 @@ DOCS = [
 
         Following INC-PAY-2026-011, enrolment in the central certificate manager becomes a mandatory
         production-readiness check from April 2026.
-        """, ["meeting", "architecture", "ai"]),
+        """,
+        ["meeting", "architecture", "ai"],
+    ),
 ]
 
 

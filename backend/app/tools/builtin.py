@@ -67,7 +67,9 @@ def build_builtin_tools(
 
     async def reindex_kb(_: Principal, args: dict[str, Any]) -> ToolOutput:
         if reindex is None:
-            return ToolOutput(text="Re-indexing is performed by the offline ingestion job (data/ingest.py) in this deployment; a request has been logged.")
+            return ToolOutput(
+                text="Re-indexing is performed by the offline ingestion job (data/ingest.py) in this deployment; a request has been logged."
+            )
         return ToolOutput(text=json.dumps(await reindex()))
 
     return [

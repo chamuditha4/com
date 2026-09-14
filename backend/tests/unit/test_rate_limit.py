@@ -20,18 +20,14 @@ class FakeClock:
 
 
 def test_bucket_math_allows_burst_then_reports_exact_retry_after():
-    tokens, decision = _refill_and_consume(
-        0.5, last_refill=10.0, now=10.0, capacity=5, refill_per_second=0.5, cost=1
-    )
+    tokens, decision = _refill_and_consume(0.5, last_refill=10.0, now=10.0, capacity=5, refill_per_second=0.5, cost=1)
     assert not decision.allowed
     assert decision.retry_after_seconds == pytest.approx(1.0)  # needs 0.5 tokens at 0.5/s
     assert tokens == pytest.approx(0.5)
 
 
 def test_bucket_never_exceeds_capacity_after_long_idle():
-    tokens, decision = _refill_and_consume(
-        0, last_refill=0, now=10_000, capacity=3, refill_per_second=1, cost=1
-    )
+    tokens, decision = _refill_and_consume(0, last_refill=0, now=10_000, capacity=3, refill_per_second=1, cost=1)
     assert decision.allowed
     assert tokens == pytest.approx(2)
 

@@ -16,10 +16,42 @@ import sys
 
 ALLOWED_MODULES = ("math", "statistics", "collections", "datetime", "json", "re", "itertools")
 SAFE_BUILTINS = (
-    "abs", "all", "any", "bool", "dict", "divmod", "enumerate", "filter", "float", "format",
-    "frozenset", "int", "isinstance", "len", "list", "map", "max", "min", "pow", "print",
-    "range", "repr", "reversed", "round", "set", "slice", "sorted", "str", "sum", "tuple",
-    "zip", "ValueError", "TypeError", "KeyError", "ZeroDivisionError", "Exception",
+    "abs",
+    "all",
+    "any",
+    "bool",
+    "dict",
+    "divmod",
+    "enumerate",
+    "filter",
+    "float",
+    "format",
+    "frozenset",
+    "int",
+    "isinstance",
+    "len",
+    "list",
+    "map",
+    "max",
+    "min",
+    "pow",
+    "print",
+    "range",
+    "repr",
+    "reversed",
+    "round",
+    "set",
+    "slice",
+    "sorted",
+    "str",
+    "sum",
+    "tuple",
+    "zip",
+    "ValueError",
+    "TypeError",
+    "KeyError",
+    "ZeroDivisionError",
+    "Exception",
 )
 MAX_OUTPUT = 8000
 
@@ -40,7 +72,7 @@ def main() -> None:
 
     import builtins
 
-    def restricted_import(name, globals=None, locals=None, fromlist=(), level=0):  # noqa: A002
+    def restricted_import(name, globals=None, locals=None, fromlist=(), level=0):
         if name in modules and level == 0:
             return modules[name]
         raise ImportError(f"import of '{name}' is not allowed")

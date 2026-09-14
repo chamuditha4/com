@@ -26,9 +26,7 @@ def build_chat_model(provider: str, model: str, settings: Settings) -> BaseChatM
     if provider == "anthropic":
         from langchain_anthropic import ChatAnthropic
 
-        return ChatAnthropic(
-            model=model, api_key=key, timeout=settings.llm_timeout_seconds, max_tokens=4096, **common
-        )
+        return ChatAnthropic(model=model, api_key=key, timeout=settings.llm_timeout_seconds, max_tokens=4096, **common)
     if provider == "openai":
         from langchain_openai import ChatOpenAI
 
@@ -36,9 +34,7 @@ def build_chat_model(provider: str, model: str, settings: Settings) -> BaseChatM
     if provider == "gemini":
         from langchain_google_genai import ChatGoogleGenerativeAI
 
-        return ChatGoogleGenerativeAI(
-            model=model, google_api_key=key, timeout=settings.llm_timeout_seconds, **common
-        )
+        return ChatGoogleGenerativeAI(model=model, google_api_key=key, timeout=settings.llm_timeout_seconds, **common)
     raise ValueError(f"unsupported LLM provider: {provider}")
 
 

@@ -129,9 +129,7 @@ class HybridRetriever:
         merged = [m for matches in per_namespace for m in matches]
         return sorted(merged, key=lambda m: (-m.score, m.id))[: self.config.candidates_per_leg]
 
-    async def _dense_leg(
-        self, query: str, namespaces: list[str], metadata_filter: dict[str, Any]
-    ) -> list[StoreMatch]:
+    async def _dense_leg(self, query: str, namespaces: list[str], metadata_filter: dict[str, Any]) -> list[StoreMatch]:
         vector = await self.embedder.embed_query(query)
         return await self._fan_out(
             namespaces,
@@ -143,9 +141,7 @@ class HybridRetriever:
             ),
         )
 
-    async def _sparse_leg(
-        self, query: str, namespaces: list[str], metadata_filter: dict[str, Any]
-    ) -> list[StoreMatch]:
+    async def _sparse_leg(self, query: str, namespaces: list[str], metadata_filter: dict[str, Any]) -> list[StoreMatch]:
         vector = self.sparse_encoder.encode_query(query)
         return await self._fan_out(
             namespaces,

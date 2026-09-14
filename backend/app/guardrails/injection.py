@@ -21,16 +21,36 @@ from dataclasses import dataclass, field
 _SIGNALS: tuple[tuple[re.Pattern[str], float, str], ...] = tuple(
     (re.compile(p, re.IGNORECASE), w, name)
     for p, w, name in (
-        (r"\b(ignore|disregard|forget|override)\b.{0,40}\b(previous|prior|above|earlier|all|system)\b.{0,20}\b(instructions?|rules|prompts?|guidelines)", 0.6, "instruction_override"),
-        (r"\b(reveal|print|show|repeat|leak|output)\b.{0,40}\b(system prompt|hidden prompt|instructions|developer message|secret|api[ _-]?keys?|passwords?|credentials)", 0.6, "exfiltration_request"),
+        (
+            r"\b(ignore|disregard|forget|override)\b.{0,40}\b(previous|prior|above|earlier|all|system)\b.{0,20}\b(instructions?|rules|prompts?|guidelines)",
+            0.6,
+            "instruction_override",
+        ),
+        (
+            r"\b(reveal|print|show|repeat|leak|output)\b.{0,40}\b(system prompt|hidden prompt|instructions|developer message|secret|api[ _-]?keys?|passwords?|credentials)",
+            0.6,
+            "exfiltration_request",
+        ),
         (r"\byou are (now|no longer)\b", 0.3, "persona_hijack"),
         (r"\b(developer|god|jailbreak|dan) mode\b", 0.5, "jailbreak_mode"),
-        (r"\bact as\b.{0,30}\b(unrestricted|unfiltered|jailbroken|without (any )?restrictions)", 0.5, "jailbreak_persona"),
+        (
+            r"\bact as\b.{0,30}\b(unrestricted|unfiltered|jailbroken|without (any )?restrictions)",
+            0.5,
+            "jailbreak_persona",
+        ),
         (r"(<\|im_start\|>|<\|system\|>|\[/?INST\]|###\s*system|BEGIN SYSTEM PROMPT)", 0.5, "control_tokens"),
         (r"</?\s*(evidence|untrusted|system|memory|tool_result)\b", 0.4, "delimiter_forgery"),
         (r"\b(new|updated) (instructions|rules)\s*:", 0.3, "instruction_injection"),
-        (r"\b(send|post|upload|exfiltrate|forward)\b.{0,50}\b(https?://|webhook|email address)", 0.5, "data_exfil_channel"),
-        (r"\b(other|another|all) (users?|customers?)('s)?\b.{0,30}\b(data|conversations?|history|accounts?|memories)", 0.4, "cross_user_access"),
+        (
+            r"\b(send|post|upload|exfiltrate|forward)\b.{0,50}\b(https?://|webhook|email address)",
+            0.5,
+            "data_exfil_channel",
+        ),
+        (
+            r"\b(other|another|all) (users?|customers?)('s)?\b.{0,30}\b(data|conversations?|history|accounts?|memories)",
+            0.4,
+            "cross_user_access",
+        ),
     )
 )
 
@@ -63,9 +83,7 @@ def normalize_text(text: str) -> str:
 def assess_injection(text: str) -> InjectionAssessment:
     normalized = normalize_text(text)
     hits = [(w, name) for pattern, w, name in _SIGNALS if pattern.search(normalized)]
-    return InjectionAssessment(
-        score=round(min(1.0, sum(w for w, _ in hits)), 2), signals=[n for _, n in hits]
-    )
+    return InjectionAssessment(score=round(min(1.0, sum(w for w, _ in hits)), 2), signals=[n for _, n in hits])
 
 
 def sanitize_untrusted(text: str, *, max_chars: int = 6000) -> str:

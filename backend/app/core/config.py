@@ -18,9 +18,7 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(
-        env_file=".env", env_file_encoding="utf-8", extra="ignore", case_sensitive=False
-    )
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore", case_sensitive=False)
 
     # --- Application -------------------------------------------------------------------
     app_env: Literal["local", "test", "production"] = "local"
@@ -84,8 +82,9 @@ class Settings(BaseSettings):
     # --- Recursive research (RLM) --------------------------------------------------------
     rlm_max_batches: int = 8
     rlm_max_depth: int = 2
-    rlm_max_docs_per_slice: int = 4
-    rlm_chunks_per_slice: int = 8
+    # Deliberately small so recursion is visible on the demo corpus; raise for production corpora.
+    rlm_max_docs_per_slice: int = 2
+    rlm_chunks_per_slice: int = 12
     rlm_batch_concurrency: int = 4
 
     # --- Agent -----------------------------------------------------------------------------

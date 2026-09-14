@@ -52,9 +52,7 @@ class UserDirectory:
     async def authenticate(self, username: str, password: str) -> Principal | None:
         user = self._by_username.get(username)
         # PBKDF2 is deliberately CPU-expensive: run it off the event loop.
-        ok = await asyncio.to_thread(
-            verify_password, password, user.password_hash if user else _DUMMY_HASH
-        )
+        ok = await asyncio.to_thread(verify_password, password, user.password_hash if user else _DUMMY_HASH)
         if user is None or not ok or not user.active:
             return None
         return user.to_principal()

@@ -26,11 +26,7 @@ _PBKDF2_ITERATIONS = 240_000
 def hash_password(password: str, *, salt: bytes | None = None) -> str:
     salt = salt or secrets.token_bytes(16)
     digest = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, _PBKDF2_ITERATIONS)
-    return "pbkdf2_sha256${}${}${}".format(
-        _PBKDF2_ITERATIONS,
-        base64.b64encode(salt).decode(),
-        base64.b64encode(digest).decode(),
-    )
+    return f"pbkdf2_sha256${_PBKDF2_ITERATIONS}${base64.b64encode(salt).decode()}${base64.b64encode(digest).decode()}"
 
 
 def verify_password(password: str, encoded: str) -> bool:
@@ -40,9 +36,7 @@ def verify_password(password: str, encoded: str) -> bool:
         return False
     if algorithm != "pbkdf2_sha256":
         return False
-    candidate = hashlib.pbkdf2_hmac(
-        "sha256", password.encode(), base64.b64decode(salt_b64), int(iterations)
-    )
+    candidate = hashlib.pbkdf2_hmac("sha256", password.encode(), base64.b64decode(salt_b64), int(iterations))
     return hmac.compare_digest(candidate, base64.b64decode(digest_b64))
 
 
@@ -58,9 +52,7 @@ def create_access_token(*, subject: str, role: str, settings: Settings) -> tuple
         "jti": uuid.uuid4().hex,
         "iss": "commercial-bank-ai-assistant",
     }
-    token = jwt.encode(
-        claims, settings.jwt_secret.get_secret_value(), algorithm=settings.jwt_algorithm
-    )
+    token = jwt.encode(claims, settings.jwt_secret.get_secret_value(), algorithm=settings.jwt_algorithm)
     return token, int(ttl.total_seconds())
 
 

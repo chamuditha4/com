@@ -3,9 +3,9 @@ from datetime import date
 import pytest
 
 from app.auth.models import AccessLevel
+from app.core.config import REPO_ROOT
 from app.core.exceptions import RetrievalUnavailableError
 from app.ingestion.chunker import chunk_document, load_markdown
-from app.core.config import REPO_ROOT
 from app.retrieval.filters import build_metadata_filter, matches_filter
 from app.retrieval.models import DocumentType, SearchFilters, date_to_ts
 
@@ -21,7 +21,12 @@ def test_filter_refuses_to_build_without_clearance():
 
 
 def test_in_memory_filter_semantics_match_pinecone_dialect():
-    md = {"access_level": "internal", "department": "payments", "created_ts": date_to_ts(date(2026, 1, 9)), "tags": ["a", "b"]}
+    md = {
+        "access_level": "internal",
+        "department": "payments",
+        "created_ts": date_to_ts(date(2026, 1, 9)),
+        "tags": ["a", "b"],
+    }
     f = build_metadata_filter(
         (AccessLevel.PUBLIC, AccessLevel.INTERNAL),
         SearchFilters(departments=["payments"], date_from=date(2025, 9, 14), date_to=date(2026, 9, 14)),
@@ -122,6 +127,4 @@ def test_catalog_overview_is_access_filtered(corpus, viewer, admin):
     admin_view = corpus.catalog.overview(admin.allowed_access_levels)
     assert admin_view.total_documents == 31
     assert viewer_view.total_documents < admin_view.total_documents
-    assert all(
-        md.access_level in ("public", "internal") for md in corpus.catalog.visible(viewer.allowed_access_levels)
-    )
+    assert all(md.access_level in ("public", "internal") for md in corpus.catalog.visible(viewer.allowed_access_levels))

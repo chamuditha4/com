@@ -31,9 +31,7 @@ def checkpoint_serializer() -> JsonPlusSerializer:
     return JsonPlusSerializer(allowed_msgpack_modules=allowed)
 
 
-async def build_persistence(
-    settings: Settings, stack: AsyncExitStack
-) -> tuple[BaseCheckpointSaver, BaseStore]:
+async def build_persistence(settings: Settings, stack: AsyncExitStack) -> tuple[BaseCheckpointSaver, BaseStore]:
     if settings.checkpointer == "redis":
         if not settings.redis_url:
             raise ValueError("CHECKPOINTER=redis requires REDIS_URL")

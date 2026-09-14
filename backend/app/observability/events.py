@@ -21,9 +21,23 @@ from app.core.logging import get_logger
 logger = get_logger("agent.activity")
 
 EventKind = Literal[
-    "node", "decision", "memory", "guardrail", "retrieval", "plan", "batch", "recursion",
-    "aggregate", "tool_call", "tool_result", "approval", "generation", "validation", "final",
-    "warning", "error",
+    "node",
+    "decision",
+    "memory",
+    "guardrail",
+    "retrieval",
+    "plan",
+    "batch",
+    "recursion",
+    "aggregate",
+    "tool_call",
+    "tool_result",
+    "approval",
+    "generation",
+    "validation",
+    "final",
+    "warning",
+    "error",
 ]
 
 

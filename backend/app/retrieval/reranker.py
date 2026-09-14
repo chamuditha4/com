@@ -22,17 +22,13 @@ logger = get_logger(__name__)
 class Reranker(Protocol):
     name: str
 
-    async def rerank(
-        self, query: str, candidates: list[RetrievedChunk], top_n: int
-    ) -> list[RetrievedChunk]: ...
+    async def rerank(self, query: str, candidates: list[RetrievedChunk], top_n: int) -> list[RetrievedChunk]: ...
 
 
 class NoopReranker:
     name = "none"
 
-    async def rerank(
-        self, query: str, candidates: list[RetrievedChunk], top_n: int
-    ) -> list[RetrievedChunk]:
+    async def rerank(self, query: str, candidates: list[RetrievedChunk], top_n: int) -> list[RetrievedChunk]:
         return candidates[:top_n]
 
 
@@ -46,9 +42,7 @@ class LexicalReranker:
     def __init__(self, coverage_weight: float = 0.6) -> None:
         self._coverage_weight = coverage_weight
 
-    async def rerank(
-        self, query: str, candidates: list[RetrievedChunk], top_n: int
-    ) -> list[RetrievedChunk]:
+    async def rerank(self, query: str, candidates: list[RetrievedChunk], top_n: int) -> list[RetrievedChunk]:
         query_terms = set(tokenize(query))
         if not candidates or not query_terms:
             return candidates[:top_n]
@@ -77,9 +71,7 @@ class PineconeReranker:
         self._client = client
         self._model = model
 
-    async def rerank(
-        self, query: str, candidates: list[RetrievedChunk], top_n: int
-    ) -> list[RetrievedChunk]:
+    async def rerank(self, query: str, candidates: list[RetrievedChunk], top_n: int) -> list[RetrievedChunk]:
         if not candidates:
             return []
         documents = [

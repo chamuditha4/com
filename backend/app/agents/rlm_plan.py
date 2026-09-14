@@ -138,13 +138,17 @@ def _quarter_windows(start: date, end: date) -> list[tuple[str, date, date]]:
 
 
 def heuristic_plan(
-    *, question: str, route: RouteDecision, overview: CatalogOverview, known_departments: list[str], today: date, max_batches: int
+    *,
+    question: str,
+    route: RouteDecision,
+    overview: CatalogOverview,
+    known_departments: list[str],
+    today: date,
+    max_batches: int,
 ) -> list[ResearchBatch]:
     """Deterministic plan: resolve the window, then decompose it into calendar quarters."""
     window = (
-        (route.date_from, route.date_to)
-        if route.date_from and route.date_to
-        else resolve_time_window(question, today)
+        (route.date_from, route.date_to) if route.date_from and route.date_to else resolve_time_window(question, today)
     )
     if window is None:
         window = (overview.earliest or today - timedelta(days=365), overview.latest or today)
@@ -163,9 +167,7 @@ def heuristic_plan(
         ResearchBatch(
             label=label,
             query=route.search_query,
-            filters=SearchFilters(
-                departments=departments, document_types=document_types, date_from=start, date_to=end
-            ),
+            filters=SearchFilters(departments=departments, document_types=document_types, date_from=start, date_to=end),
         )
         for label, start, end in windows
     ]

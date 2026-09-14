@@ -85,4 +85,3 @@ async def build_index(
     )
     logger.info("index built", extra={"report": report.__dict__, "store": store.name})
     return encoder, catalog, report
-

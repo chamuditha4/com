@@ -48,7 +48,11 @@ class MCPToolProvider:
                     result = await client.list_tools()
             except Exception:
                 logger.warning("mcp tool discovery failed", exc_info=True)
-                return self._cache[1] if self._cache else []
+                if self._cache:
+                    return self._cache[1]
+                # Negative cache: retry discovery after 30s instead of on every request.
+                self._cache = (time.monotonic() - self._ttl + 30, [])
+                return []
             tools = [
                 RemoteToolDefinition(
                     name=f"{MCP_TOOL_PREFIX}{t.name}",

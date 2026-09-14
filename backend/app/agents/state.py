@@ -36,10 +36,18 @@ def append_or_reset(left: list[Any] | None, right: list[Any] | None) -> list[Any
     return [*(left or []), *right]
 
 
+RESET = "__reset__"
+
+
 def union_or_reset(left: list[str] | None, right: list[str] | None) -> list[str]:
-    """Order-preserving set union; `None` resets. Safe when a subgraph echoes parent values."""
+    """Order-preserving set union. `None` resets; `[RESET, *items]` resets then adds items.
+
+    Union (not concatenation) is required because a subgraph returns the parent's values
+    alongside its own additions."""
     if right is None:
         return []
+    if right and right[0] == RESET:
+        left, right = [], right[1:]
     merged = list(left or [])
     merged.extend(item for item in right if item not in merged)
     return merged
@@ -71,7 +79,9 @@ class RouteDecision(BaseModel):
         max_length=500,
         description="A standalone search query that resolves pronouns and references using the conversation history.",
     )
-    departments: list[str] = Field(default_factory=list, description="Department slugs to scope the search, if clearly implied.")
+    departments: list[str] = Field(
+        default_factory=list, description="Department slugs to scope the search, if clearly implied."
+    )
     document_types: list[DocumentType] = Field(default_factory=list)
     date_from: date | None = None
     date_to: date | None = None
@@ -290,7 +300,19 @@ class ResearchOutput(TypedDict, total=False):
 # Registered with the checkpoint serializer so these types round-trip safely (LangGraph blocks
 # deserialization of unregistered classes).
 CHECKPOINT_TYPES: tuple[type[BaseModel], ...] = (
-    GuardVerdict, RouteDecision, Evidence, ResearchBatch, ResearchPlan, IncidentFinding,
-    BatchFinding, RootCauseTally, ResearchReport, ToolCallRecord, ValidationIssue,
-    ValidationReport, FinalAnswer, CatalogOverview, SearchFilters,
+    GuardVerdict,
+    RouteDecision,
+    Evidence,
+    ResearchBatch,
+    ResearchPlan,
+    IncidentFinding,
+    BatchFinding,
+    RootCauseTally,
+    ResearchReport,
+    ToolCallRecord,
+    ValidationIssue,
+    ValidationReport,
+    FinalAnswer,
+    CatalogOverview,
+    SearchFilters,
 )

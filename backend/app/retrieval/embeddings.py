@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import itertools
 import math
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Protocol
@@ -42,7 +43,7 @@ class HashingEmbedder:
 
     def _embed(self, text: str) -> list[float]:
         tokens = tokenize(text)
-        features = tokens + [f"{a}_{b}" for a, b in zip(tokens, tokens[1:], strict=False)]
+        features = tokens + [f"{a}_{b}" for a, b in itertools.pairwise(tokens)]
         vector = [0.0] * self.dimension
         for feature in features:
             digest = hashlib.blake2b(feature.encode(), digest_size=8).digest()
@@ -63,18 +64,14 @@ class PineconeEmbedder:
 
     name = "pinecone"
 
-    def __init__(
-        self, client: PineconeAsyncio, model: str, dimension: int, *, batch_size: int = 90
-    ) -> None:
+    def __init__(self, client: PineconeAsyncio, model: str, dimension: int, *, batch_size: int = 90) -> None:
         self._client = client
         self._model = model
         self.dimension = dimension
         self._batch_size = batch_size
 
     async def _embed(self, texts: Sequence[str], input_type: str) -> list[list[float]]:
-        batches = [
-            texts[i : i + self._batch_size] for i in range(0, len(texts), self._batch_size)
-        ]
+        batches = [texts[i : i + self._batch_size] for i in range(0, len(texts), self._batch_size)]
         results = await asyncio.gather(
             *(
                 self._client.inference.embed(
