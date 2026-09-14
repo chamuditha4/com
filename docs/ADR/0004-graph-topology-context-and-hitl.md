@@ -36,6 +36,14 @@ stays pure and testable.
 All non-conversation fields reset each turn. `degraded` uses a union reducer with a `RESET`
 marker, because subgraph outputs echo parent values.
 
+### 6. Forced first tool call (amendment, 2026-09-14)
+
+Once the supervisor routes to `tools`, the first `tool_planner` call binds tools with
+`tool_choice="any"` (both OpenAI and Gemini honour it). In live testing the fast model declined an
+approval-gated admin tool in 1 of 3 runs, answering "not found" instead of pausing for approval.
+Deciding *whether* a tool is needed belongs to the supervisor. The planner decides *which* tool.
+Later iterations are unforced, so the loop still terminates on its own.
+
 ## Consequences
 
 - Every node is a plain `async def node(state, runtime)`, unit-testable with offline adapters.

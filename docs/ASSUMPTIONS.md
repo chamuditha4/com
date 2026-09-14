@@ -13,6 +13,7 @@ with the reasoning. Code shortcuts are also tagged `# SCALE-DEBT:` at the call s
 | A4 | RLM extraction is shaped for incident reports (root cause, impact). | This is the canonical demo. Other research questions pass the best passages to synthesis without structured extraction (ADR-0003). |
 | A5 | `RLM_MAX_DOCS_PER_SLICE` defaults to 2 so recursion is visible on a 31-document corpus. | Production corpora should raise it (e.g. 10–20). |
 | A6 | Chat answers are grounded only in retrieved evidence; the assistant declines instead of answering from general knowledge. | For a regulated bank, an uncited answer is worse than no answer. |
+| A7 | Research scope is recall-oriented (the supervisor may include adjacent departments); precision comes from an explicit per-incident relevance decision by the extraction sub-agent. Exclusions are shown in the Activity Panel, not silently dropped. | Found in live testing: a technology login incident entered a "payment failures" analysis through a widened scope. Narrowing the scope would lose recall. |
 
 ## Security & RBAC
 
@@ -24,6 +25,7 @@ with the reasoning. Code shortcuts are also tagged `# SCALE-DEBT:` at the call s
 | S4 | The MCP server is reachable only on the internal Docker network and trusts the API. RBAC for MCP tools is enforced in the API before calling. | Keeps the MCP server simple. mTLS or service tokens are the production path. |
 | S5 | Retrieved passages with injection signals are flagged, not removed. | Removing them would let an attacker suppress facts by adding trigger phrases. |
 | S6 | Login attempts are throttled per username using the same token bucket as chat. | Brute-force protection without extra infrastructure. |
+| S7 | When the supervisor routes to tools, the first tool-planning call forces a tool choice (`tool_choice="any"`). | Found in live testing: the fast model sometimes declined an approval-gated admin tool itself (1 in 3 runs). The approval gate and RBAC still apply to whatever is called. |
 
 ## Scalability debt
 
@@ -40,5 +42,7 @@ with the reasoning. Code shortcuts are also tagged `# SCALE-DEBT:` at the call s
 
 | # | Note |
 |---|---|
-| E1 | Verified locally: 106 automated tests; ingestion dry run; a real-network smoke test (MCP server and API as separate processes, SSE stream). |
-| E2 | Not verified in this environment (no API keys, full disk): live Anthropic, Pinecone and LangSmith calls, Docker image builds, and the Redis-backed checkpointer/store. Run `docker compose up --build` and the opt-in Redis test before the demo. |
+| E1 | Verified with automated tests: offline suite (108 tests, hermetic: it ignores `.env`); live suite against OpenAI `gpt-5.5` / `gpt-5.4-mini`, Gemini `gemini-3.5-flash` fallback and LangSmith (12/12, `RUN_LIVE_TESTS=1`). |
+| E2 | Verified manually: ingestion dry run; real-network runs with the MCP server and API as separate processes (offline and live LLM), SSE; Streamlit UI driven with `AppTest`; `docker compose config`; LangSmith trace lookup by API trace id. |
+| E3 | Not yet verified: Anthropic models (no key), Pinecone store, embeddings and reranker (`VECTOR_STORE=pinecone`), Docker image builds, Redis-backed persistence (`TEST_REDIS_URL`). |
+| E4 | LangSmith organization-scoped keys need `LANGSMITH_WORKSPACE_ID`; without it, ingestion returns 403. |

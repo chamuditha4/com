@@ -25,7 +25,7 @@ flowchart LR
   UI[Streamlit<br/>chat + Agent Activity] -- SSE --> API[FastAPI]
   API --> G[LangGraph<br/>supervisor · RLM · tools · validator]
   G --> R[Hybrid retrieval] --> P[(Pinecone)]
-  G --> L[Claude Sonnet 5 / Haiku 4.5]
+  G --> L[LLM gateway<br/>GPT-5.5 · GPT-5.4-mini<br/>Gemini fallback]
   G --> T[Tools] --> M[MCP ops server]
   API <--> Re[(Redis)]
   G -.-> LS[LangSmith]
@@ -72,9 +72,9 @@ uv run streamlit run frontend/streamlit_app.py
 | Mode | Settings | What you get |
 |---|---|---|
 | **Offline** (default in `.env.example` without keys) | `LLM_PROVIDER=none` or no key, `VECTOR_STORE=memory`, `EMBEDDING_PROVIDER=hash` | Full graph on deterministic fallbacks: keyword routing, quarterly RLM plans, extractive answers. Answers are marked `degraded`. |
-| **LLM + local index** | `LLM_PROVIDER=anthropic`, `ANTHROPIC_API_KEY=…` | LLM routing, Python plans, extraction and synthesis over the in-memory index |
+| **LLM + local index** (tested configuration) | `LLM_PROVIDER=openai` (`gpt-5.5` / `gpt-5.4-mini`), `LLM_FALLBACK_PROVIDER=gemini` (`gemini-3.5-flash`) + keys | LLM routing, Python plans, extraction and synthesis over the in-memory index, with cross-vendor failover. Anthropic is also supported. |
 | **Production-like** | also `PINECONE_API_KEY`, `VECTOR_STORE=pinecone`, `EMBEDDING_PROVIDER=pinecone`, `RERANKER=pinecone`, then run ingestion | Pinecone dense + sparse indexes, hosted e5 embeddings and bge reranker |
-| **Tracing** | `LANGSMITH_TRACING=true`, `LANGSMITH_API_KEY=…` | Every run in LangSmith; the root run id equals the `X-Trace-Id` shown in the UI |
+| **Tracing** | `LANGSMITH_TRACING=true`, `LANGSMITH_API_KEY=…` (+ `LANGSMITH_WORKSPACE_ID` for organization-scoped keys) | Every run in LangSmith; the root run id equals the `X-Trace-Id` shown in the UI |
 
 Ingest into Pinecone (idempotent; creates the indexes if missing):
 
@@ -129,7 +129,8 @@ Errors are always `{"error": {"code", "message", "trace_id", "details?"}}`, neve
 ## Tests
 
 ```bash
-uv run pytest                     # unit + integration, fully offline (~10s)
+uv run pytest                     # unit + integration, fully offline and hermetic (~10s)
+RUN_LIVE_TESTS=1 uv run pytest backend/tests/live   # real LLM providers + LangSmith (~4 min, paid calls)
 uv run ruff check backend data scripts frontend
 TEST_REDIS_URL=redis://localhost:6379/15 uv run pytest backend/tests/integration/test_redis_persistence.py
 ```
@@ -163,9 +164,11 @@ docs/                 architecture, security, memory, model selection, assumptio
 
 ## Verification status
 
-- ✅ Verified in development: automated test suite; offline ingestion; real-network smoke test
-  (MCP server and API as separate processes, SSE); Streamlit UI driven end to end with
-  Streamlit's `AppTest` against a live API; `docker compose config`.
-- ⚠️ Not yet verified in this environment (no provider keys, limited disk): live Anthropic,
-  Pinecone and LangSmith calls, Docker image builds, and the Redis-backed persistence test.
-  Run these before recording the demo. See [docs/ASSUMPTIONS.md](docs/ASSUMPTIONS.md) §E.
+- ✅ **Offline suite:** 108 tests, hermetic.
+- ✅ **Live suite:** 12/12 against OpenAI `gpt-5.5` / `gpt-5.4-mini` with Gemini `gemini-3.5-flash` fallback and LangSmith. Covers fallback takeover, RLM correctness per role, tools/MCP, HITL, injection, memory and tracing.
+- ✅ **Manual checks:**
+  - live HTTP stack (canonical RLM query: 10/10 incidents, 3/3/2/2 tally, validated citations, about 35 s);
+  - Streamlit UI driven end to end with `AppTest`;
+  - ingestion dry run;
+  - `docker compose config`.
+- ⚠️ **Not yet verified:** Anthropic models, the Pinecone-backed store, embeddings and reranker, Docker image builds, and Redis-backed persistence. See [docs/ASSUMPTIONS.md](docs/ASSUMPTIONS.md) §E.

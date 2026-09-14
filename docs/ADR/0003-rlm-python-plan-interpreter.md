@@ -38,6 +38,19 @@ aggregate. Two risks:
   an end-to-end test caught this.
 - Aggregation is deterministic Python. The LLM extracts per-slice findings, and the code counts.
 
+## Amendments from live testing (2026-09-14)
+
+- **Relevance gate.** `ExtractedIncident.relevant` and `relevance_reason` are required. With a
+  real LLM, the supervisor widened scope to `payments` + `technology`, and a sub-slice holding only an
+  internet-banking login incident was reported as a payment failure. Scope stays recall-oriented;
+  the sub-agent now makes an explicit, traced relevance decision, and exclusions are emitted as
+  Activity Panel events.
+- **Fair evidence allocation.** Evidence was numbered in incident date order until
+  `MAX_RESEARCH_EVIDENCE`. When the LLM listed many passages per incident, later incidents got
+  no citable evidence, and the grounded answer reported "six incidents" out of ten. Allocation is
+  now round-robin: each incident's best passage first, then second passages. Covered by
+  `test_evidence_cap_never_starves_later_incidents`.
+
 ## Consequences
 
 - The recursion tree and plan are fully visible and auditable. The tally is reproducible.

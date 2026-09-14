@@ -15,7 +15,7 @@ flowchart LR
   graph --> retriever["Hybrid retriever"]
   retriever --> pinecone[("Pinecone<br/>dense index + sparse (BM25) index<br/>namespaces = departments")]
   retriever --> inference["Pinecone Inference<br/>e5 embeddings · bge reranker"]
-  graph --> llm["LLM gateway<br/>Claude Sonnet 5 / Haiku 4.5<br/>retry · fallback · semaphore"]
+  graph --> llm["LLM gateway<br/>OpenAI GPT-5.5 / GPT-5.4-mini<br/>Gemini fallback · retry · semaphore"]
   graph --> tools["Tool registry<br/>RBAC re-check · audit"]
   tools --> mcp["MCP operations server<br/>(internal network)"]
   tools --> sandbox["Python sandbox<br/>(isolated child process)"]
