@@ -2,11 +2,12 @@
 
 Run with a disposable Redis 8 database:
     docker run --rm -p 6379:6379 redis:8.2
-    TEST_REDIS_URL=redis://localhost:6379/15 uv run pytest backend/tests/integration/test_redis_persistence.py
+    TEST_REDIS_URL=redis://localhost:6379/0 uv run pytest   # search indexes require DB 0; use a dedicated instance backend/tests/integration/test_redis_persistence.py
 """
 
 from __future__ import annotations
 
+import asyncio
 import os
 import uuid
 from contextlib import AsyncExitStack
@@ -80,3 +81,15 @@ async def test_rate_limit_is_shared_between_workers(redis_settings):
             await worker_a.rate_limiter.acquire(key),
         ]
         assert [d.allowed for d in decisions] == [True, True, False]
+
+
+async def test_concurrent_worker_startup_is_race_safe(redis_settings):
+    """Several workers boot at once against an empty Redis and all create the search indexes."""
+    from redis.asyncio import Redis
+
+    client = Redis.from_url(REDIS_URL)
+    await client.flushall()
+    await client.aclose()
+    async with AsyncExitStack() as stack:
+        workers = await asyncio.gather(*(_worker(redis_settings, stack) for _ in range(4)))
+        assert len(workers) == 4
