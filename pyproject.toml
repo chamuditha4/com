@@ -58,10 +58,11 @@ src = ["backend", "."]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "ASYNC", "S", "RUF"]
-ignore = ["S101", "RUF001", "RUF002", "RUF003"]
+# E501: `ruff format` owns code layout; remaining long lines are prose in prompts and messages.
+ignore = ["S101", "E501", "RUF001", "RUF002", "RUF003"]
 
 [tool.ruff.lint.per-file-ignores]
 "backend/tests/**" = ["S105", "S106", "E501"]
 "scripts/generate_mock_data.py" = ["E501"]
 "backend/mcp_server/data.py" = ["E501"]
-"backend/app/auth/users.py" = ["E501"]
+"backend/app/auth/users.py" = ["S106"]  # PBKDF2 hashes, not passwords

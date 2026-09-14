@@ -73,6 +73,7 @@ def main() -> None:
         transport="streamable-http",
         host=os.getenv("MCP_HOST", "0.0.0.0"),  # noqa: S104 - container-internal
         port=int(os.getenv("MCP_PORT", "8765")),
+        stateless_http=True,  # no server-side sessions: any replica can serve any request
     )
 
 

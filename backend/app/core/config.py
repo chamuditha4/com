@@ -91,6 +91,7 @@ class Settings(BaseSettings):
     agent_max_validation_retries: int = 1
     agent_max_tool_iterations: int = 3
     agent_history_window: int = 10  # messages kept verbatim in short-term memory
+    chat_timeout_seconds: float = 180.0  # upper bound for one turn, including RLM fan-out
 
     # --- Memory ----------------------------------------------------------------------------
     checkpointer: Literal["memory", "redis"] = "memory"
@@ -112,6 +113,8 @@ class Settings(BaseSettings):
     # LANGSMITH_API_KEY, LANGSMITH_PROJECT); we only keep what the UI needs to deep-link.
     langsmith_project: str = "enterprise-ai-assistant"
     langsmith_tracing: bool = False
+    langsmith_api_key: SecretStr | None = None
+    langsmith_endpoint: str = "https://api.smith.langchain.com"
 
     @model_validator(mode="after")
     def _check_production_safety(self) -> Settings:

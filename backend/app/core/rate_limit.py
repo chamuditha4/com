@@ -84,7 +84,7 @@ class InMemoryTokenBucket:
             return decision
 
 
-_LUA_TOKEN_BUCKET = """
+_BUCKET_LUA_SCRIPT = """
 local key = KEYS[1]
 local capacity = tonumber(ARGV[1])
 local refill = tonumber(ARGV[2])
@@ -121,7 +121,7 @@ class RedisTokenBucket:
         self._capacity = capacity
         self._refill = refill_per_second
         self._prefix = prefix
-        self._script = redis.register_script(_LUA_TOKEN_BUCKET)
+        self._script = redis.register_script(_BUCKET_LUA_SCRIPT)
         self._fallback = fallback or InMemoryTokenBucket(capacity, refill_per_second)
 
     async def acquire(self, key: str, cost: float = 1.0) -> RateLimitDecision:

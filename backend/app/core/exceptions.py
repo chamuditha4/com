@@ -58,6 +58,12 @@ class NotFoundError(AppError):
     message = "The requested resource was not found."
 
 
+class ConflictError(AppError):
+    status_code = 409
+    code = "conflict"
+    message = "The request conflicts with the current state of the resource."
+
+
 class RetrievalUnavailableError(AppError):
     status_code = 503
     code = "retrieval_unavailable"
