@@ -1,11 +1,14 @@
-# Enterprise AI Assistant — local deployment.
+# Enterprise AI Assistant.
 #
-#   docker compose up --build                      # offline-capable stack (see .env.example)
-#   docker compose --profile ingest run --rm ingest   # index data/mock into Pinecone (needs keys)
+# Deployment (Coolify): use this file as-is. No ports are published to the host; Coolify's proxy
+# reaches `frontend` (8501) and, if you want the API public, `api` (8000) on the internal network.
 #
-# Pinecone and LangSmith are managed services; everything else runs here. Every service is
-# independently scalable. API workers keep no session state (Redis holds checkpoints, memory,
-# rate-limit buckets and the audit log).
+# Local:
+#   docker compose -f docker-compose.yml -f docker-compose.local.yml up --build   # publishes 8000 / 8501
+#   docker compose --profile ingest run --rm ingest                              # index data/mock into Pinecone
+#
+# Pinecone and LangSmith are managed services; everything else runs here. API workers keep no session
+# state (Redis holds checkpoints, memory, rate-limit buckets and the audit log).
 
 name: enterprise-ai-assistant
 
@@ -61,8 +64,8 @@ services:
       MCP_SERVER_URL: http://mcp-server:8765/mcp
       CORS_ORIGINS: '["http://localhost:8501"]'
       WEB_CONCURRENCY: "2"
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000" # internal only; route a domain to it in Coolify if the API should be public
     volumes:
       - artifacts:/srv/data/artifacts
 
@@ -72,8 +75,8 @@ services:
       dockerfile: docker/frontend.Dockerfile
     environment:
       API_URL: http://api:8000
-    ports:
-      - "8501:8501"
+    expose:
+      - "8501" # internal only; Coolify routes the public domain here
     depends_on:
       api:
         condition: service_healthy
