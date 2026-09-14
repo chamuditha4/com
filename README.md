@@ -54,7 +54,8 @@ docker compose -f docker-compose.yml -f docker-compose.local.yml up --build
 
 - Point Coolify at `docker-compose.yml` (no host ports are published). Assign the public domain to `frontend` on port `8501`. Only assign one to `api` (port `8000`) if external clients need the API; the UI reaches it internally at `http://api:8000`.
 - Set the variables from `.env.example` in Coolify's environment settings. `.env` is not in the repository.
-- With `VECTOR_STORE=pinecone`, the API needs the ingestion artifacts (BM25 stats and the document catalog) in the shared `artifacts` volume before it can start. On the first deploy, run `python data/ingest.py` once inside the `api` container (it writes to that volume, and the upsert is idempotent).
+- Pinecone must already contain the vectors: run `python data/ingest.py` once from any machine with the keys (it is idempotent). On a fresh `artifacts` volume the API derives the BM25 statistics and document catalog from the bundled corpus at startup, so a first deploy needs no manual step. An empty index is logged as a warning, not a crash.
+- Mark the environment variables as runtime-only in Coolify. By default Coolify also passes them to the image build as build arguments; these images don't need them there, and secrets can end up in build metadata.
 
 ### Option 2: Local processes
 

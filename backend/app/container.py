@@ -20,7 +20,7 @@ from app.auth.users import UserDirectory
 from app.core.config import Settings
 from app.core.logging import get_logger
 from app.core.rate_limit import InMemoryTokenBucket, RateLimiter, RedisTokenBucket
-from app.ingestion.pipeline import build_index
+from app.ingestion.pipeline import build_index, derive_corpus_artifacts
 from app.llm.factory import build_llm
 from app.llm.gateway import LLMClient
 from app.memory.long_term import LongTermMemory
@@ -62,6 +62,31 @@ def _pinecone_client(settings: Settings, stack: AsyncExitStack) -> Any:
     return client
 
 
+def load_or_derive_artifacts(settings: Settings) -> tuple[BM25Encoder, DocumentCatalog]:
+    """Load ingestion artifacts, or derive them from the bundled corpus when the volume is fresh.
+
+    A first deployment (e.g. Coolify with an empty `artifacts` volume) must not crash-loop on a file
+    that is cheap to recompute. Saving is best-effort: a read-only volume only costs a re-derive."""
+    if settings.bm25_params_path.exists() and settings.catalog_path.exists():
+        return BM25Encoder.load(settings.bm25_params_path), DocumentCatalog.load(settings.catalog_path)
+    if not settings.mock_docs_dir.exists():
+        raise FileNotFoundError(
+            f"ingestion artifacts missing in {settings.artifacts_dir} and no corpus at {settings.mock_docs_dir}; "
+            "run `python data/ingest.py`"
+        )
+    encoder, catalog = derive_corpus_artifacts(settings.mock_docs_dir)
+    try:
+        encoder.save(settings.bm25_params_path)
+        catalog.save(settings.catalog_path)
+    except OSError:
+        logger.warning("could not persist derived ingestion artifacts", exc_info=True)
+    logger.warning(
+        "ingestion artifacts were missing; derived them from the bundled corpus",
+        extra={"docs_dir": str(settings.mock_docs_dir), "artifacts_dir": str(settings.artifacts_dir)},
+    )
+    return encoder, catalog
+
+
 def build_embedder(settings: Settings, pinecone: Any) -> Embedder:
     if settings.embedding_provider == "pinecone":
         return PineconeEmbedder(pinecone, settings.embedding_model, settings.embedding_dimension)
@@ -89,10 +114,11 @@ async def build_retriever(settings: Settings, stack: AsyncExitStack) -> tuple[Hy
         from app.retrieval.stores.pinecone_store import PineconeStore
 
         store = await PineconeStore.connect(settings, pinecone)
-        if not settings.bm25_params_path.exists() or not settings.catalog_path.exists():
-            raise FileNotFoundError("Pinecone mode needs ingestion artifacts; run `python data/ingest.py` first")
-        encoder = BM25Encoder.load(settings.bm25_params_path)
-        catalog = DocumentCatalog.load(settings.catalog_path)
+        encoder, catalog = load_or_derive_artifacts(settings)
+        if not sum((await store.namespace_counts()).values()):
+            logger.warning(
+                "pinecone index is empty; run `python data/ingest.py` to populate it (answers will find no evidence)"
+            )
     else:
         # SCALE-DEBT: offline mode indexes the mock corpus in-process at startup.
         store = InMemoryVectorStore()

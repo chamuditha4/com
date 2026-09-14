@@ -16,7 +16,9 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import os
 import re
+import tempfile
 from collections import Counter
 from collections.abc import Iterable
 from pathlib import Path
@@ -34,6 +36,20 @@ STOPWORDS = frozenset(
     whom why will with would you your yours yourself yourselves last during please tell give show
     list summarize""".split()
 )
+
+
+def write_atomically(path: Path, content: str) -> None:
+    """Write via a temp file + rename so concurrent workers never read a half-written artifact."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.")
+    try:
+        with os.fdopen(fd, "w") as handle:
+            handle.write(content)
+        os.replace(tmp, path)
+    except BaseException:
+        if os.path.exists(tmp):
+            os.unlink(tmp)
+        raise
 
 
 def _stem(token: str) -> str:
@@ -126,8 +142,7 @@ class BM25Encoder:
         )
 
     def save(self, path: Path) -> None:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(self.to_dict()))
+        write_atomically(path, json.dumps(self.to_dict()))
 
     @classmethod
     def load(cls, path: Path) -> BM25Encoder:

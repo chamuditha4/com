@@ -17,6 +17,7 @@ from pydantic import BaseModel
 
 from app.auth.models import AccessLevel
 from app.retrieval.models import DocumentMetadata, SearchFilters
+from app.retrieval.sparse import write_atomically
 
 
 class CatalogEntry(BaseModel):
@@ -76,8 +77,7 @@ class DocumentCatalog:
         )
 
     def save(self, path: Path) -> None:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps([e.model_dump(mode="json") for e in self._entries], indent=1))
+        write_atomically(path, json.dumps([e.model_dump(mode="json") for e in self._entries], indent=1))
 
     @classmethod
     def load(cls, path: Path) -> DocumentCatalog:
